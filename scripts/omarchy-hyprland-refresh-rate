@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# omarchy:summary=Show or set focused Hyprland monitor refresh rate
+# omarchy:args=[60|120|RATE]
+
+set -euo pipefail
+
+monitor_info="$(hyprctl monitors -j | jq -e -c '.[] | select(.focused == true)' 2>/dev/null || hyprctl monitors -j | jq -e -c '.[0]')"
+active_monitor="$(echo "$monitor_info" | jq -r '.name')"
+current_rate="$(echo "$monitor_info" | jq -r '.refreshRate' | awk '{printf "%d", $1 + 0.5}')"
+width="$(echo "$monitor_info" | jq -r '.width')"
+height="$(echo "$monitor_info" | jq -r '.height')"
+scale="$(echo "$monitor_info" | jq -r '.scale')"
+
+case "${1:-}" in
+  "")
+    echo "$current_rate"
+    ;;
+  60|120|*)
+    TARGET_RATE="${1:-60}"
+    # Sanitization
+    if [[ ! $TARGET_RATE =~ ^[0-9]+$ ]]; then
+      echo "Invalid refresh rate: $TARGET_RATE" >&2
+      exit 1
+    fi
+    hyprctl eval "hl.monitor({ output = \"$active_monitor\", mode = \"${width}x${height}@${TARGET_RATE}\", position = \"0x0\", scale = $scale })" >/dev/null
+    echo "$TARGET_RATE"
+    ;;
+esac
