@@ -1,0 +1,2 @@
+# Set Kyber low-latency I/O scheduler for NVMe drives
+ACTION=="add|change", KERNEL=="nvme[0-9]*n[0-9]*", ATTR{queue/scheduler}="kyber"

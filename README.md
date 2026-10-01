@@ -43,6 +43,7 @@ Because Quickshell manages reactive UI states while Hyprland manages physical la
 | **07** | **ASUS ROG Profiles** | 80% charge limit or fan profiles reset after unplug | `asus-battery-toggle` | [Fix 07](fixes/07-asus-rog-hardware-profiles.md) |
 | **08** | **Global Laptop Power Profile** | Universal laptop battery optimization (Intel/AMD, ASPM, EPP, C-states) | `omarchy-power-profile` | [Fix 08](fixes/08-laptop-power-saving-pd-charging.md) |
 | **09** | **ASUS Flow X13 Device Profile** | Hardware-specific tuning (Cezanne ABM, ALC294 PM, 100W PD EC throttling) | `omarchy-hyprland-refresh-rate` | [Fix 09](fixes/09-asus-flow-x13-device-profile.md) |
+| **10** | **Performance & Build Speed** | Multi-threaded builds (`-j16`), pacman parallel, Kyber NVMe I/O, VA-API | `cat /sys/block/nvme0n1/queue/scheduler` | [Fix 10](fixes/10-desktop-responsiveness-build-speed.md) |
 
 ---
 
