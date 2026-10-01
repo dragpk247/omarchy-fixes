@@ -42,6 +42,7 @@ Because Quickshell manages reactive UI states while Hyprland manages physical la
 | **06** | **Audio & WirePlumber** | Mute or volume out of sync with hardware DAC/headset | `wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle` | [Fix 06](fixes/06-audio-wireplumber-desync.md) |
 | **07** | **ASUS ROG Profiles** | 80% charge limit or fan profiles reset after unplug | `asus-battery-toggle` | [Fix 07](fixes/07-asus-rog-hardware-profiles.md) |
 | **08** | **Laptop Power & PD Charging** | Battery draining on AC or failing to charge on 65W/100W PD | `omarchy-power-profile` | [Fix 08](fixes/08-laptop-power-saving-pd-charging.md) |
+| **09** | **ASUS ROG Flow X13 Profile** | Hardware-specific tuning (ABM, audio PM, NMI, writeback) | `cat /sys/class/drm/card*-eDP-1/amdgpu/panel_power_savings` | [Fix 09](fixes/09-asus-flow-x13-device-profile.md) |
 
 ---
 

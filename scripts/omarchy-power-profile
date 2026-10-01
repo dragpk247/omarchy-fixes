@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# omarchy-power-profile: Power optimizer for Omarchy
-# Configured to stay in power-saving mode even on AC to prevent tripping
-# 3rd-party USB-PD chargers (e.g. 65W cap) and avoid battery drain.
+# omarchy-power-profile: Power optimizer for ASUS ROG Flow X13 & generic Omarchy laptops
+# Configured to enforce power-saving mode even on AC to prevent tripping
+# 3rd-party USB-PD chargers (e.g. 65W cap) and maximize battery longevity.
 
 set -euo pipefail
 
@@ -23,19 +23,17 @@ elif [ "${1:-}" = "battery" ]; then
     IS_AC=0
 fi
 
-# 2. Hyprland Display & Animations Adjustment
-# Keep display at 60Hz and animations disabled to keep GPU wattage minimal
+# 2. Hyprland Animations Adjustment (Disabled to eliminate GPU render wakeups)
 apply_hyprland_settings() {
     local target_user="${1:-jpi}"
-    local user_id
     if [ "$(id -u)" -eq 0 ]; then
         local user_id="$(id -u "$target_user" 2>/dev/null || echo 1000)"
         local runtime_dir="/run/user/$user_id"
         local sig="$(find "$runtime_dir/hypr" -maxdepth 1 -name ".hyprctl.*.sock" 2>/dev/null | head -n 1 | sed 's/.*\.hyprctl\.\(.*\)\.sock/\1/' || true)"
         XDG_RUNTIME_DIR="$runtime_dir" HYPRLAND_INSTANCE_SIGNATURE="$sig" su -s /bin/bash "$target_user" -c \
-            "hyprctl eval 'hl.monitor({ output = \"eDP-1\", mode = \"1920x1200@60\", position = \"0x0\", scale = 1.6 }); hl.config({ animations = { enabled = false } })'" 2>/dev/null || true
+            "hyprctl eval 'hl.config({ animations = { enabled = false } })'" 2>/dev/null || true
     else
-        hyprctl eval 'hl.monitor({ output = "eDP-1", mode = "1920x1200@60", position = "0x0", scale = 1.6 }); hl.config({ animations = { enabled = false } })' 2>/dev/null || true
+        hyprctl eval 'hl.config({ animations = { enabled = false } })' 2>/dev/null || true
     fi
 }
 
@@ -61,4 +59,18 @@ if [ -w /sys/module/pcie_aspm/parameters/policy ]; then
     echo "powersave" > /sys/module/pcie_aspm/parameters/policy 2>/dev/null || true
 fi
 
-echo "Omarchy power profile applied: Safe Power-Saving Mode Locked (Quiet / 60Hz / EPP: Power)"
+# 6. AMD Radeon iGPU Panel Power Savings (Adaptive Backlight Management - ABM)
+for pps in /sys/class/drm/card*-eDP-1/amdgpu/panel_power_savings; do
+    if [ -w "$pps" ]; then
+        # Level 1 provides subtle, intelligent backlight power reduction without distorting colors
+        echo 1 > "$pps" 2>/dev/null || true
+    fi
+done
+
+# 7. Audio Codec (Realtek ALC294) Power Save
+if [ -w /sys/module/snd_hda_intel/parameters/power_save ]; then
+    # Sleep after 1 second of audio silence instead of lingering for 10 seconds
+    echo 1 > /sys/module/snd_hda_intel/parameters/power_save 2>/dev/null || true
+fi
+
+echo "Omarchy power profile applied: Safe Power-Saving Mode Locked (Quiet / EPP: Power / ABM: 1 / Audio PM: 1s)"
