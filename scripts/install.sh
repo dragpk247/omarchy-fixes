@@ -35,12 +35,16 @@ fi
 cp "$SCRIPT_DIR/omarchy-power-profile" "$BIN_DIR/omarchy-power-profile"
 cp "$SCRIPT_DIR/omarchy-power-monitor" "$BIN_DIR/omarchy-power-monitor"
 cp "$SCRIPT_DIR/omarchy-hyprland-refresh-rate" "$BIN_DIR/omarchy-hyprland-refresh-rate"
-chmod +x "$BIN_DIR/omarchy-power-profile" "$BIN_DIR/omarchy-power-monitor" "$BIN_DIR/omarchy-hyprland-refresh-rate"
-mkdir -p "$HOME/.config/systemd/user"
+cp "$SCRIPT_DIR/spotify" "$BIN_DIR/spotify"
+chmod +x "$BIN_DIR/omarchy-power-profile" "$BIN_DIR/omarchy-power-monitor" "$BIN_DIR/omarchy-hyprland-refresh-rate" "$BIN_DIR/spotify"
+mkdir -p "$HOME/.config/systemd/user" "$HOME/.local/share/applications"
 cp "$SCRIPT_DIR/omarchy-power-optimizer.service" "$HOME/.config/systemd/user/omarchy-power-optimizer.service"
+if [[ -f "$SCRIPT_DIR/../configs/spotify.desktop" ]]; then
+  cp "$SCRIPT_DIR/../configs/spotify.desktop" "$HOME/.local/share/applications/spotify.desktop"
+fi
 systemctl --user daemon-reload
 systemctl --user enable --now omarchy-power-optimizer.service >/dev/null 2>&1 || true
-echo "[✓] Installed power optimizer and refresh rate utilities"
+echo "[✓] Installed power optimizer, refresh rate, and Spotify Wayland utilities"
 
 # 4. Optional system-level configs (if run with elevated privileges or manually copied)
 CONFIGS_DIR="$(cd "$SCRIPT_DIR/../configs" 2>/dev/null && pwd || true)"

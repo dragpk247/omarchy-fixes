@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# spotify: Optimized Wayland wrapper for Spotify on Omarchy
+# Features:
+# - Native Wayland mode (sharp text at 1.6x fractional scale, zero XWayland blur)
+# - Hardware-accelerated GPU rasterization via AMD Radeon iGPU
+# - Background renderer throttling when window is occluded or in another workspace
+# - Low CPU audio consumption and memory trimming
+
+FLAGS=(
+  "--enable-features=UseOzonePlatform,WaylandWindowDecorations,VaapiVideoDecoder,ThrottleDisplayNoneAndVisibilityHiddenCrossOriginIframes,WebContentsFrameRateLimiting"
+  "--ozone-platform=wayland"
+  "--enable-gpu-rasterization"
+  "--enable-zero-copy"
+  "--disable-features=AutofillActorMode,LensOverlay,BackForwardCache"
+  "--disable-background-networking"
+)
+
+exec /opt/spotify/spotify "${FLAGS[@]}" "$@"

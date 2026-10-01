@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Spotify (Optimized Wayland)
+GenericName=Music Player
+Icon=spotify-client
+TryExec=spotify
+Exec=/home/jpi/.local/bin/spotify --uri=%u
+Terminal=false
+MimeType=x-scheme-handler/spotify;
+Categories=Audio;Music;Player;AudioVideo;
+StartupWMClass=spotify
