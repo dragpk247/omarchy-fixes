@@ -31,5 +31,15 @@ if [[ -f "$AUTOSTART_FILE" ]]; then
   fi
 fi
 
+# 3. Install power profile optimizer & service
+cp "$SCRIPT_DIR/omarchy-power-profile" "$BIN_DIR/omarchy-power-profile"
+cp "$SCRIPT_DIR/omarchy-power-monitor" "$BIN_DIR/omarchy-power-monitor"
+chmod +x "$BIN_DIR/omarchy-power-profile" "$BIN_DIR/omarchy-power-monitor"
+mkdir -p "$HOME/.config/systemd/user"
+cp "$SCRIPT_DIR/omarchy-power-optimizer.service" "$HOME/.config/systemd/user/omarchy-power-optimizer.service"
+systemctl --user daemon-reload
+systemctl --user enable --now omarchy-power-optimizer.service >/dev/null 2>&1 || true
+echo "[✓] Installed and enabled omarchy-power-optimizer service"
+
 echo ""
-echo "Installation complete! The menu wrapper is now active."
+echo "Installation complete! All fixes and services are now active."

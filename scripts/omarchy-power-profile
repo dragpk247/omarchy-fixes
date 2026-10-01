@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# omarchy-power-profile: Power optimizer for Omarchy
+# Configured to stay in power-saving mode even on AC to prevent tripping
+# 3rd-party USB-PD chargers (e.g. 65W cap) and avoid battery drain.
+
+set -euo pipefail
+
+# 1. Determine Power State
+IS_AC=0
+for supply in /sys/class/power_supply/AC* /sys/class/power_supply/ADP* /sys/class/power_supply/Mains*; do
+    if [ -f "$supply/online" ]; then
+        if [ "$(cat "$supply/online")" -eq 1 ]; then
+            IS_AC=1
+            break
+        fi
+    fi
+done
+
+# Override if argument passed: "ac" or "battery"
+if [ "${1:-}" = "ac" ]; then
+    IS_AC=1
+elif [ "${1:-}" = "battery" ]; then
+    IS_AC=0
+fi
+
+# 2. Hyprland Display & Animations Adjustment
+# Keep display at 60Hz and animations disabled to keep GPU wattage minimal
+apply_hyprland_settings() {
+    local target_user="${1:-jpi}"
+    local user_id
+    if [ "$(id -u)" -eq 0 ]; then
+        local user_id="$(id -u "$target_user" 2>/dev/null || echo 1000)"
+        local runtime_dir="/run/user/$user_id"
+        local sig="$(find "$runtime_dir/hypr" -maxdepth 1 -name ".hyprctl.*.sock" 2>/dev/null | head -n 1 | sed 's/.*\.hyprctl\.\(.*\)\.sock/\1/' || true)"
+        XDG_RUNTIME_DIR="$runtime_dir" HYPRLAND_INSTANCE_SIGNATURE="$sig" su -s /bin/bash "$target_user" -c \
+            "hyprctl eval 'hl.monitor({ output = \"eDP-1\", mode = \"1920x1200@60\", position = \"0x0\", scale = 1.6 }); hl.config({ animations = { enabled = false } })'" 2>/dev/null || true
+    else
+        hyprctl eval 'hl.monitor({ output = "eDP-1", mode = "1920x1200@60", position = "0x0", scale = 1.6 }); hl.config({ animations = { enabled = false } })' 2>/dev/null || true
+    fi
+}
+
+apply_hyprland_settings "jpi"
+
+# 3. CPU Energy-Performance-Preference (EPP)
+# Always set to power saver to keep thermals and wattage well within charger limits
+if [ -d /sys/devices/system/cpu/cpufreq ]; then
+    for epp in /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference; do
+        if [ -w "$epp" ]; then
+            echo "power" > "$epp" 2>/dev/null || true
+        fi
+    done
+fi
+
+# 4. Kernel ACPI Platform Profile (Always Quiet)
+if [ -w /sys/firmware/acpi/platform_profile ]; then
+    echo "quiet" > /sys/firmware/acpi/platform_profile 2>/dev/null || true
+fi
+
+# 5. PCIe Active State Power Management (ASPM)
+if [ -w /sys/module/pcie_aspm/parameters/policy ]; then
+    echo "powersave" > /sys/module/pcie_aspm/parameters/policy 2>/dev/null || true
+fi
+
+echo "Omarchy power profile applied: Safe Power-Saving Mode Locked (Quiet / 60Hz / EPP: Power)"

@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# omarchy-power-monitor: User-space daemon that watches AC status and applies profiles
+
+LAST_STATE=""
+
+while true; do
+    IS_AC=0
+    for supply in /sys/class/power_supply/AC* /sys/class/power_supply/ADP* /sys/class/power_supply/Mains*; do
+        if [ -f "$supply/online" ]; then
+            if [ "$(cat "$supply/online")" -eq 1 ]; then
+                IS_AC=1
+                break
+            fi
+        fi
+    done
+
+    CURRENT_STATE="$IS_AC"
+
+    if [ "$CURRENT_STATE" != "$LAST_STATE" ]; then
+        if [ "$CURRENT_STATE" -eq 1 ]; then
+            /home/jpi/.local/bin/omarchy-power-profile ac
+        else
+            /home/jpi/.local/bin/omarchy-power-profile battery
+        fi
+        LAST_STATE="$CURRENT_STATE"
+    fi
+
+    # Check every 2 seconds
+    sleep 2
+done
