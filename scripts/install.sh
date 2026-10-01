@@ -31,15 +31,26 @@ if [[ -f "$AUTOSTART_FILE" ]]; then
   fi
 fi
 
-# 3. Install power profile optimizer & service
+# 3. Install power profile optimizer, refresh rate utility & service
 cp "$SCRIPT_DIR/omarchy-power-profile" "$BIN_DIR/omarchy-power-profile"
 cp "$SCRIPT_DIR/omarchy-power-monitor" "$BIN_DIR/omarchy-power-monitor"
-chmod +x "$BIN_DIR/omarchy-power-profile" "$BIN_DIR/omarchy-power-monitor"
+cp "$SCRIPT_DIR/omarchy-hyprland-refresh-rate" "$BIN_DIR/omarchy-hyprland-refresh-rate"
+chmod +x "$BIN_DIR/omarchy-power-profile" "$BIN_DIR/omarchy-power-monitor" "$BIN_DIR/omarchy-hyprland-refresh-rate"
 mkdir -p "$HOME/.config/systemd/user"
 cp "$SCRIPT_DIR/omarchy-power-optimizer.service" "$HOME/.config/systemd/user/omarchy-power-optimizer.service"
 systemctl --user daemon-reload
 systemctl --user enable --now omarchy-power-optimizer.service >/dev/null 2>&1 || true
-echo "[✓] Installed and enabled omarchy-power-optimizer service"
+echo "[✓] Installed power optimizer and refresh rate utilities"
+
+# 4. Optional system-level configs (if run with elevated privileges or manually copied)
+CONFIGS_DIR="$(cd "$SCRIPT_DIR/../configs" 2>/dev/null && pwd || true)"
+if [[ -n "$CONFIGS_DIR" && -d "$CONFIGS_DIR" ]]; then
+  if command -v pkexec >/dev/null 2>&1; then
+    pkexec cp -f "$CONFIGS_DIR/sysctl.d/"* /etc/sysctl.d/ 2>/dev/null || true
+    pkexec cp -f "$CONFIGS_DIR/tmpfiles.d/"* /etc/tmpfiles.d/ 2>/dev/null || true
+    pkexec sysctl --system >/dev/null 2>&1 || true
+  fi
+fi
 
 echo ""
 echo "Installation complete! All fixes and services are now active."

@@ -11,17 +11,18 @@
 2. **Auto-Performance Power Surge:** Connecting AC power automatically triggers daemons (like `asusd` and `nvidia-powerd`) to switch the system into `Performance` mode, spiking CPU/GPU boost wattage beyond what the 3rd-party charger can supply.
 3. **Display & Compositor Overhead:** Running high refresh rates (120Hz/165Hz) and heavy Hyprland animations draws continuous power from the iGPU/dGPU and memory controller.
 
-## Automated Solution
+## Universal Global Laptop Architecture
 
-We provide an automated optimizer and continuous systemd service that enforces conservative, efficient power-saving states even while on AC power.
+While **Fix 09** targets specific ASUS ROG Flow hardware, **Fix 08** is the **Universal / Global Laptop Profile** designed to optimize **any modern laptop** running Omarchy (Dell XPS, Lenovo ThinkPad/Legion, Framework, HP Spectre, Acer, ASUS, etc.), supporting both **Intel Core** and **AMD Ryzen** architectures.
 
-### 1. What the Optimizer Tunes
-- **Display Refresh Rate:** Caps internal laptop display at **60Hz** via Hyprland's native Lua IPC (`hl.monitor`).
-- **Hyprland Effects:** Disables heavy animations (`hl.config({ animations = { enabled = false } })`) to minimize render loop wakeups.
-- **CPU Energy-Performance-Preference (`EPP`):** Writes `power` to `/sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference`.
-- **Platform Profile:** Locks ACPI platform profile to `quiet` (`/sys/firmware/acpi/platform_profile`).
-- **PCIe Active State Power Management:** Enables `powersave` on PCIe links.
-- **Discrete GPU:** Ensures runtime suspend (`supergfxctl -m Hybrid` or `Integrated` with `nvidia-powerd` masked).
+### 1. Global Hardware-Agnostic Optimizations
+- **Universal ACPI Platform Profile:** Leverages the Linux kernel standard `/sys/firmware/acpi/platform_profile` (`quiet`, `balanced`, `performance`) supported by Dell, Lenovo, HP, Framework, and ASUS.
+- **Universal CPU Energy-Performance Bias (`EPP`):** Automatically detects and applies `power` scaling across all CPU cores for both `intel_pstate` and `amd-pstate-epp` drivers (`/sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference`).
+- **Universal PCIe ASPM:** Enforces link-state power management (`powersave`) across all PCIe buses via `/sys/module/pcie_aspm/parameters/policy`.
+- **Universal Audio Fast-Sleep:** Puts Intel/Realtek HDA audio codecs into low-power D3cold state after 1s of silence (`/sys/module/snd_hda_intel/parameters/power_save = 1`).
+- **Universal Storage APST Sleep:** Extends dirty page flushing from 15s to 60s (`vm.dirty_writeback_centisecs = 6000`), letting any NVMe SSD controller enter deep Autonomous Power State Transitions (APST).
+- **Universal CPU Deep C-States:** Disables continuous NMI watchdog timer interrupts (`kernel.nmi_watchdog = 0`) so all Intel/AMD CPU threads stay asleep during idle.
+- **Universal Wayland Compositor Throttling:** Disables unnecessary Hyprland animation loops to minimize continuous GPU wakeups.
 
 ### 2. Manual Commands & Service Management
 ```bash
